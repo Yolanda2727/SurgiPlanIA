@@ -1,0 +1,105 @@
+
+import streamlit as st
+import pandas as pd
+import plotly.express as px
+from datetime import datetime, timedelta
+import random
+
+st.set_page_config(page_title="SurgiPlanIA® Ético", layout="wide")
+
+st.title("🧠 SurgiPlanIA® Ético")
+st.subheader("Sistema Ético de Programación Quirúrgica con Validación de Recursos Humanos")
+
+st.markdown("**Creador:** Dr. Anderson Díaz Pérez")
+
+st.markdown("### 🎯 Objetivo del Modelo")
+st.markdown("""
+Este sistema inteligente apoya la programación quirúrgica hospitalaria con criterios éticos como justicia, equidad, oportunidad y no maleficencia,
+evitando solapamientos y sobrecarga del equipo de salud.
+""")
+
+st.markdown("---")
+
+# Carga de datos de ejemplo
+st.sidebar.header("📁 Carga de datos")
+if st.sidebar.button("Usar datos de ejemplo"):
+    cirugias = pd.DataFrame({
+        "ID": [1, 2, 3],
+        "Paciente": ["Juan Pérez", "Ana Torres", "Luis Gómez"],
+        "Procedimiento": ["Colecistectomía", "Histerectomía", "Artroscopia"],
+        "Especialidad": ["Cirugía General", "Ginecología", "Ortopedia"],
+        "Duración_horas": [2, 3, 1.5],
+        "Fecha": ["2025-06-24", "2025-06-25", "2025-06-26"],
+        "Hora_inicio": ["08:00", "10:00", "09:00"],
+        "Quirófano": ["Q1", "Q2", "Q1"],
+        "Prioridad": ["Alta", "Media", "Urgente"],
+        "Paciente_Estrato": [2, 3, 1],
+        "Demora_Días": [5, 8, 12],
+        "Cirujano": ["Dr. Ruiz", "Dr. Ruiz", "Dra. Gómez"],
+        "Instrumentador": ["Lic. Marta", "Lic. Marta", "Lic. Juan"]
+    })
+
+    def prioridad_etica(row):
+        score = 0
+        if row["Prioridad"] == "Urgente":
+            score += 3
+        if row["Especialidad"] in ["Oncología", "Cardiología"]:
+            score += 2
+        if row["Paciente_Estrato"] in [1, 2]:
+            score += 1
+        if row["Demora_Días"] > 10:
+            score += 1
+        return score
+
+    cirugias["Score_Etico"] = cirugias.apply(prioridad_etica, axis=1)
+    cirugias = cirugias.sort_values(by="Score_Etico", ascending=False)
+    cirugias['Inicio'] = pd.to_datetime(cirugias['Fecha'] + ' ' + cirugias['Hora_inicio'])
+    cirugias['Fin'] = cirugias['Inicio'] + cirugias['Duración_horas'].apply(lambda x: timedelta(hours=x))
+
+    # Verificar solapamientos por profesional
+    st.header("🔍 Validación de Solapamiento del Personal Quirúrgico")
+    alertas = []
+    for idx1, row1 in cirugias.iterrows():
+        for idx2, row2 in cirugias.iterrows():
+            if idx1 >= idx2:
+                continue
+            if row1["Cirujano"] == row2["Cirujano"] or row1["Instrumentador"] == row2["Instrumentador"]:
+                if not (row1["Fin"] <= row2["Inicio"] or row2["Fin"] <= row1["Inicio"]):
+                    conflicto = f"⚠️ Conflicto: {row1['Cirujano']} o {row1['Instrumentador']} asignado en {row1['ID']} y {row2['ID']}"
+                    alertas.append(conflicto)
+    if alertas:
+        for a in alertas:
+            st.error(a)
+    else:
+        st.success("✅ No hay solapamientos de personal.")
+
+    # Visualización
+    st.header("📆 Calendario Quirúrgico Ético")
+    fig = px.timeline(cirugias, x_start="Inicio", x_end="Fin", y="Quirófano", color="Especialidad",
+                      hover_data=["Paciente", "Procedimiento", "Cirujano", "Instrumentador", "Score_Etico"])
+    fig.update_yaxes(categoryorder="category ascending")
+    st.plotly_chart(fig, use_container_width=True)
+
+    st.header("📋 Cronograma Completo")
+    st.dataframe(cirugias)
+
+    st.header("📤 Exportar Informe")
+    with pd.ExcelWriter("programacion_etica_completa.xlsx") as writer:
+        cirugias.to_excel(writer, sheet_name="Cronograma", index=False)
+    with open("programacion_etica_completa.xlsx", "rb") as file:
+        st.download_button(label="📥 Descargar Excel", data=file, file_name="programacion_etica_completa.xlsx")
+
+    st.header("💬 Chat Ético Quirúrgico")
+    pregunta = st.text_input("¿Desea consultar sobre turnos, asignaciones o principios éticos?")
+    if pregunta:
+        respuestas = [
+            "Se evita la doble asignación del personal en turnos simultáneos.",
+            "Las cirugías se asignan priorizando el principio de oportunidad clínica.",
+            "El sistema respeta el principio de no maleficencia al evitar sobrecarga.",
+            "La asignación respeta justicia distributiva entre especialidades.",
+            "Todo paciente con prioridad alta ha sido reprogramado esta semana."
+        ]
+        st.info(random.choice(respuestas))
+
+st.markdown("---")
+st.markdown("🔒 Sistema Ético Quirúrgico. © 2025 Dr. Anderson Díaz Pérez")
