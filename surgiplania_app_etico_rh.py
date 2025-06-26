@@ -146,6 +146,12 @@ if query:
             time.sleep(1)
 
         # Recuperar respuesta
-        messages = openai.beta.threads.messages.list(thread_id=st.session_state.thread_id)
-        respuesta = messages.data[0].content[0].text.value
+       messages = openai.beta.threads.messages.list(thread_id=st.session_state.thread_id)
+
+# Buscar la última respuesta del asistente
+for msg in messages.data:
+    if msg.role == "assistant":
+        respuesta = msg.content[0].text.value
         st.success(respuesta)
+        break
+
