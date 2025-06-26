@@ -114,7 +114,7 @@ query = st.text_input("¿En qué puedo ayudarte hoy como asistente quirúrgico y
 
 # Clave y ID del asistente
 openai.api_key = st.secrets["OPENAI_API_KEY"]
-asistente_id = "asst_QCQbYElu2uChGd8g4zTlmair"  # Reemplace con su ID
+asistente_id = "asst_NUjCl5ohZobYAx5sTFsBDAjt"  # Reemplace con su ID
 
 # Crear thread solo una vez
 if "thread_id" not in st.session_state:
