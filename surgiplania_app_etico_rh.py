@@ -106,52 +106,43 @@ st.markdown("🔒 Sistema Ético Quirúrgico. © 2025 Dr. Anderson Díaz Pérez"
 import openai
 import os
 
-# Título para la sección del asistente
 st.header("🤖 Asistente Ético-Quirúrgico Inteligente")
 
-# Entrada del usuario
 query = st.text_input("¿En qué puedo ayudarte hoy como asistente quirúrgico y ético?")
 
-# Clave y ID del asistente
 openai.api_key = st.secrets["OPENAI_API_KEY"]
-asistente_id = "asst_QCQbYElu2uChGd8g4zTlmair"  # Reemplace con su ID
+asistente_id = "asst_QCQbYElu2uChGd8g4zTlmair"  # Tu ID correcto
 
-# Crear thread solo una vez
 if "thread_id" not in st.session_state:
     thread = openai.beta.threads.create()
     st.session_state.thread_id = thread.id
 
-# Si hay pregunta del usuario:
 if query:
     with st.spinner("Consultando al asistente..."):
-        # Enviar mensaje
         openai.beta.threads.messages.create(
             thread_id=st.session_state.thread_id,
             role="user",
             content=query
         )
 
-        # Ejecutar al asistente
         run = openai.beta.threads.runs.create(
             thread_id=st.session_state.thread_id,
             assistant_id=asistente_id
         )
 
-        # Esperar respuesta
         import time
         while True:
-            status = openai.beta.threads.runs.retrieve(thread_id=st.session_state.thread_id, run_id=run.id)
+            status = openai.beta.threads.runs.retrieve(
+                thread_id=st.session_state.thread_id,
+                run_id=run.id
+            )
             if status.status == "completed":
                 break
             time.sleep(1)
 
-        # Recuperar respuesta
-       messages = openai.beta.threads.messages.list(thread_id=st.session_state.thread_id)
-
-# Buscar la última respuesta del asistente
-for msg in messages.data:
-    if msg.role == "assistant":
-        respuesta = msg.content[0].text.value
-        st.success(respuesta)
-        break
-
+        messages = openai.beta.threads.messages.list(thread_id=st.session_state.thread_id)
+        for msg in messages.data:
+            if msg.role == "assistant":
+                respuesta = msg.content[0].text.value
+                st.success(respuesta)
+                break
